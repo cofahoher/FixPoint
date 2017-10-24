@@ -883,6 +883,104 @@ public partial struct FixPoint : IEquatable<FixPoint>, IComparable<FixPoint>
         return count;
     }
 
+    internal static void GenerateSinTable()
+    {
+        using (var writer = new StreamWriter("FixPointSinTable.cs"))
+        {
+            writer.Write(
+@"partial struct FixPoint {
+    public static readonly long[] SinTable = new[] {
+#if FIXPOINT_32BITS_FRACTIONAL");
+            long one = 1L << 32;
+            int line_counter = 0;
+            for (long i = 0; i < SIN_TABLE_SIZE; ++i)
+            {
+                double angle = i * Math.PI * 0.5 / (SIN_TABLE_SIZE - 1);
+                if (line_counter++ % 8 == 0)
+                {
+                    writer.WriteLine();
+                    writer.Write("        ");
+                }
+                double sin = Math.Sin(angle);
+                long raw_value = (long)(sin * one);
+                writer.Write(string.Format("0x{0:X}L, ", raw_value));
+            }
+            writer.Write(
+@"
+#else");
+            one = 1L << 16;
+            line_counter = 0;
+            for (long i = 0; i < SIN_TABLE_SIZE; ++i)
+            {
+                double angle = i * Math.PI * 0.5 / (SIN_TABLE_SIZE - 1);
+                if (line_counter++ % 8 == 0)
+                {
+                    writer.WriteLine();
+                    writer.Write("        ");
+                }
+                double sin = Math.Sin(angle);
+                long raw_value = (long)(sin * one);
+                writer.Write(string.Format("0x{0:X}L, ", raw_value));
+            }
+            writer.Write(
+@"
+#endif
+    };
+}");
+        }
+    }
+
+    internal static void GenerateAtan2Table()
+    {
+        using (var writer = new StreamWriter("FixPointAtan2Table.cs"))
+        {
+            writer.Write(
+@"partial struct FixPoint {
+    public static readonly long[] Atan2Table = new[] {
+#if FIXPOINT_32BITS_FRACTIONAL");
+            long one = 1L << 32;
+            int line_counter = 0;
+            int atan2_table_size = ATAN2_TABLE_SIZE;
+            double x = (double)(atan2_table_size);
+            for (int i = 0; i < atan2_table_size; ++i)
+            {
+                if (line_counter++ % 8 == 0)
+                {
+                    writer.WriteLine();
+                    writer.Write("        ");
+                }
+                double y = (double)i;
+                double radian = Math.Atan2(y, x);
+                long raw_value = (long)(radian * one);
+                writer.Write(string.Format("0x{0:X}L, ", raw_value));
+            }
+            writer.Write(
+@"
+#else");
+            one = 1L << 16;
+            line_counter = 0;
+            atan2_table_size = ATAN2_TABLE_SIZE;
+            x = (double)(atan2_table_size);
+            for (int i = 0; i < atan2_table_size; ++i)
+            {
+                if (line_counter++ % 8 == 0)
+                {
+                    writer.WriteLine();
+                    writer.Write("        ");
+                }
+                double y = (double)i;
+                double radian = Math.Atan2(y, x);
+                long raw_value = (long)(radian * one);
+                writer.Write(string.Format("0x{0:X}L, ", raw_value));
+            }
+            writer.Write(
+@"
+#endif
+    };
+}");
+        }
+    }
+
     static readonly char WhiteSpace = (char)1;
     static readonly char Error_____ = (char)2;
     static readonly char Digit_____ = (char)3;
